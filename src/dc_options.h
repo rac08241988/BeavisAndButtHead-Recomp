@@ -1,4 +1,4 @@
-/* Demon's Crest: in-game options menu (F12 or Escape / gamepad Guide).
+/* Beavis and Butt-Head: in-game options menu (F12 or Escape / gamepad Guide).
  *
  * Hosts the RetroArch .glslp shader-preset picker and the 120 Hz motion
  * mode. Presets are scanned from shaders/presets/ beside the executable; the

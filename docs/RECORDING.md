@@ -62,7 +62,7 @@ exactly the input frame N ran with**; replay writes it back at that same point.
 
    ```powershell
    $env:SNESREC_RING_DIR = "captures\somulo"
-   .\DemonsCrestSNESRecomp.exe "Demon's Crest (USA).sfc"
+   .\BeavisAndButtHeadSNESRecomp.exe "Beavis and Butt-Head (USA).sfc"
    ```
 
    `SNESREC_RING=1` (or `record_ring_start`) keeps the last ~5 s in memory;

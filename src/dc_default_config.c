@@ -1,4 +1,4 @@
-/* Demon's Crest default config.ini: the framework's, plus OutputMethod =
+/* Beavis and Butt-Head default config.ini: the framework's, plus OutputMethod =
  * OpenGL (shader presets need it) and Rewind on Shift+F12 (plain F12 opens
  * the in-game Options menu). Generated from the framework default by hand;
  * keep in step with snesrecomp/runner/src/desktop/host_main.c. */

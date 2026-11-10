@@ -1,4 +1,9 @@
-# Porting notes — Demon's Crest (USA)
+# Porting notes
+
+> Inherited from the Demon's Crest SNESRecomp template. The log below
+> describes that game's original bring-up, not Beavis and Butt-Head.
+> For this port, start with `README.md` and `rom_identity.txt`.
+
 
 Verified state of this project plus the engineering log for turning the
 scaffold into a validated playable port. Facts below were produced in this

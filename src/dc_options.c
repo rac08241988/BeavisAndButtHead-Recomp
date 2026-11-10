@@ -1224,7 +1224,7 @@ static void render_panel(const SnesModalLayerView *v) {
   /* Header */
   rp_text(c, RP_BOLD, 40 * s, x, y, "Options", C_TEXT, w * .6f);
   {
-    const char *game = "CRASH DUMMIES";
+    const char *game = "BEAVIS & BUTT-HEAD";
     float gs = 14 * s;
     float gw = rp_text_width(RP_BOLD, gs, game);
     rp_text(c, RP_BOLD, gs, x + w - gw, y + 16 * s, game, C_ACCENT2, w * .38f);

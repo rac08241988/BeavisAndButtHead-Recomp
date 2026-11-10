@@ -1,7 +1,7 @@
 /*
- * Demon's Crest widescreen mod plugin.
+ * Beavis and Butt-Head widescreen mod plugin.
  *
- * The package (mods/preloaded/packages/demons-crest.enhancement.widescreen)
+ * The package (mods/preloaded/packages/beavisandbutthead.enhancement.widescreen)
  * declares the feature "widescreen" with the "aspect" choice; this file is
  * the trusted activation half. The runtime runs the reset callback before
  * activating plugins, so a disabled feature restores authentic 4:3 on every
@@ -23,9 +23,9 @@
 
 /* Must match the manifest: [[target]] applies to the package id, [[feature]]
  * and [[plugin]] carry these ids. */
-#define DC_WIDESCREEN_PACKAGE "demons-crest.enhancement.widescreen"
+#define DC_WIDESCREEN_PACKAGE "beavisandbutthead.enhancement.widescreen"
 #define DC_WIDESCREEN_FEATURE "widescreen"
-#define DC_WIDESCREEN_PLUGIN  "demons-crest.widescreen"
+#define DC_WIDESCREEN_PLUGIN  "beavisandbutthead.widescreen"
 
 static void DcWidescreenResetMod(void) {
     DcWidescreenReset();

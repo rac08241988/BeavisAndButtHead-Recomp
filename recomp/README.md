@@ -1,6 +1,6 @@
 # recomp/
 
-Analysis input for Demon's Crest. `tools/regen.sh` reads this directory and
+Analysis input for Beavis and Butt-Head. `tools/regen.sh` reads this directory and
 writes `src/gen/`.
 
 | File | Owner | Notes |

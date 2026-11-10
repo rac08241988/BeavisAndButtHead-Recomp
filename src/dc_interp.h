@@ -1,4 +1,4 @@
-/* Demon's Crest: render-side motion for 120 Hz+ displays.
+/* Beavis and Butt-Head: render-side motion for 120 Hz+ displays.
  *
  * Game logic stays at 60 Hz. When a mode other than Off is chosen and the
  * display refreshes at 100 Hz or more, the host presents faster than it
@@ -10,7 +10,7 @@
  *
  * Ported from the SRW1 (Super Ryu World 1) recomp add-on and adapted to the
  * beam-driven raster (the observer sees every line's live register state)
- * and to Demon's Crest's native widescreen frame (any width up to
+ * and to this port's native widescreen frame (any width up to
  * kPpuBufWidth). */
 #ifndef DC_INTERP_H
 #define DC_INTERP_H

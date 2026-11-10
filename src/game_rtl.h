@@ -3,7 +3,7 @@
 
 #include "common_cpu_infra.h"
 
-/* One frame of Demon's Crest. See game_rtl.c — this is the port. */
+/* One frame of Beavis and Butt-Head. See game_rtl.c — this is the port. */
 void GameRunOneFrame(void);
 void GameDrawPpuFrame(void);
 void GameSessionReset(void);

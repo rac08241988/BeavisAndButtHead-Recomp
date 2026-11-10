@@ -2,8 +2,8 @@
  * Antialiased rounded rects, circles, capsules and TrueType text (stb_truetype
  * with an embedded Inter, SIL OFL 1.1 -- see fonts/Inter-OFL.txt), drawn into
  * an ARGB8888 canvas. Drawing is premultiplied; rp_finish converts the canvas
- * to straight alpha for the host's modal layer. Shared by the Demon's Crest
- * and Super Ryu World ports. */
+ * to straight alpha for the host's modal layer. Shared by the Beavis and
+ * Butt-Head and Super Ryu World ports. */
 #ifndef RPANEL_H
 #define RPANEL_H
 #include <stdint.h>
