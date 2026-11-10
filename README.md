@@ -7,7 +7,7 @@
 An unofficial Windows PC port of **Beavis and Butt-Head** (SNES, USA),
 built on the [snesrecomp](https://github.com/magnopaz/snesrecomp) framework
 from the [Demon's Crest SNESRecomp](https://github.com/rac08241988/DemonsCrestSNESRecomp)
-v1.1.0 template. Release v1.0.2 includes opt-in 16:9 widescreen (see below). It boots, plays, and has the full
+v1.1.0 template. Release v1.0.3 includes opt-in 16:9 widescreen (see below). It boots, plays, and has the full
 Options menu, but see [Known limitations](#known-limitations).
 
 ## Features
@@ -28,10 +28,12 @@ Options menu, but see [Known limitations](#known-limitations).
   to 60 fps), save states (10 quick slots plus a browser), rewind,
   turbo, recording, fullscreen and window scaling.
 - Xbox / XInput controller support with a positional SNES layout.
+- Real SNES box art as the app icon (the original front cover, letterboxed
+  into a square, used for the exe, the launcher and the game window).
 
 ## Play on Windows (no coding needed)
 
-1. Download `BeavisAndButtHead-SNESRecomp-windows-x64-v1.0.2.zip` from the
+1. Download `BeavisAndButtHead-SNESRecomp-windows-x64-v1.0.3.zip` from the
    [Releases](https://github.com/rac08241988/BeavisAndButtHead-Recomp/releases)
    page and unzip it anywhere.
 2. Open `BeavisAndButtHeadSNESRecomp.exe`.

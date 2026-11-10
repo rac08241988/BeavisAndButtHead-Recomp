@@ -62,6 +62,9 @@ ROM_CRC32="$(python3 "$IDENTITY_TOOL" rom_identity.txt --get expected_crc32)"
 # the pack root; CMakeLists.txt stages them beside the rebuilt exe.
 SHADER_ARGS=()
 if [ -d "$BUILD_DIR/shaders/presets" ]; then SHADER_ARGS=(--runtime-dir shaders); fi
+# Window/taskbar PNG+BMP staged beside the exe; include them in the pack so
+# the setup host can apply the SDL icon before the first rebuild.
+if [ -d "$BUILD_DIR/icon" ]; then SHADER_ARGS+=(--runtime-dir icon); fi
 
 exec bash "$IMPL" \
   --runtime-dir mods \

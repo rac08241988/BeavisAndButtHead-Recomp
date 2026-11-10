@@ -26,6 +26,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include "host_main.h"
 #include "game_rtl.h"
 #include "dc_display.h"
@@ -39,6 +40,16 @@
 #define SDL_MAIN_HANDLED 1
 #endif
 #include "desktop/sdl_compat.h"
+#ifdef RECOMP_LAUNCHER
+#include "recomp_launcher.h"
+#endif
+#ifdef _WIN32
+#include <windows.h>
+#include <wchar.h>
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 #ifdef __ANDROID__
 /* SDLActivity loads libmain.so and dlsyms its SDL_main. */
 #define main SDL_main
@@ -48,7 +59,139 @@
 #define SNES_GAME_VERSION "dev"
 #endif
 
+
+/* App icon: original SNES front box art, letterboxed, staged as icon.png
+ * and icon.bmp beside the exe. The Windows .ico is also embedded via
+ * src/win32/app.rc so Explorer and the taskbar show it on both the setup
+ * host and the playable rebuild. */
+static char g_bb_icon_path[1024];
+
+static int BbFileExists(const char *path) {
+#ifdef _WIN32
+    return path && path[0] && _access(path, 0) == 0;
+#else
+    return path && path[0] && access(path, F_OK) == 0;
+#endif
+}
+
+static void BbResolveIconPath(void) {
+    char dir[800];
+    if (g_bb_icon_path[0]) return;
+    dir[0] = 0;
+#ifdef _WIN32
+    {
+        wchar_t wpath[MAX_PATH];
+        char utf8[MAX_PATH * 4];
+        DWORD n = GetModuleFileNameW(NULL, wpath, MAX_PATH);
+        wchar_t *slash;
+        if (n == 0 || n >= MAX_PATH) return;
+        slash = wcsrchr(wpath, L'\\');
+        if (!slash) return;
+        slash[1] = L'\0';
+        if (WideCharToMultiByte(CP_UTF8, 0, wpath, -1, utf8, (int)sizeof(utf8),
+                                NULL, NULL) <= 0)
+            return;
+        snprintf(dir, sizeof(dir), "%s", utf8);
+    }
+#else
+    {
+        char link[800];
+        ssize_t n = readlink("/proc/self/exe", link, sizeof(link) - 1);
+        char *slash;
+        if (n <= 0) return;
+        link[n] = '\0';
+        slash = strrchr(link, '/');
+        if (!slash) return;
+        slash[1] = '\0';
+        snprintf(dir, sizeof(dir), "%s", link);
+    }
+#endif
+    /* Prefer the PNG (launcher stb loader); fall back to BMP / icon/. */
+    snprintf(g_bb_icon_path, sizeof(g_bb_icon_path), "%sicon.png", dir);
+    if (BbFileExists(g_bb_icon_path)) return;
+    snprintf(g_bb_icon_path, sizeof(g_bb_icon_path), "%sicon.bmp", dir);
+    if (BbFileExists(g_bb_icon_path)) return;
+    snprintf(g_bb_icon_path, sizeof(g_bb_icon_path), "%sicon/icon.png", dir);
+    if (BbFileExists(g_bb_icon_path)) return;
+    g_bb_icon_path[0] = 0;
+}
+
+#ifdef RECOMP_LAUNCHER
+static void BbConfigureLauncher(RecompLauncherCGameInfo *info) {
+    BbResolveIconPath();
+    if (g_bb_icon_path[0]) info->window_icon_path = g_bb_icon_path;
+}
+#endif
+
+static void BbApplySdlWindowIcon(void) {
+    static int applied = 0;
+    SDL_Surface *surf = NULL;
+    char bmp[1024];
+#if SNESRECOMP_SDL3
+    int n = 0;
+    SDL_Window **wins = NULL;
+#endif
+    if (applied) return;
+    applied = 1;
+    BbResolveIconPath();
+    /* Load a BMP for SDL_SetWindowIcon (no SDL_image required). */
+    bmp[0] = 0;
+    if (g_bb_icon_path[0]) {
+        size_t len = strlen(g_bb_icon_path);
+        if (len > 4) {
+            snprintf(bmp, sizeof(bmp), "%s", g_bb_icon_path);
+            memcpy(bmp + len - 4, ".bmp", 5);
+            if (!BbFileExists(bmp)) {
+                /* icon.png beside icon.bmp: try replacing the filename. */
+                char *slash = strrchr(bmp, '/');
+#ifdef _WIN32
+                char *bslash = strrchr(bmp, '\\');
+                if (bslash && (!slash || bslash > slash)) slash = bslash;
+#endif
+                if (slash) snprintf(slash + 1, sizeof(bmp) - (size_t)(slash + 1 - bmp), "icon.bmp");
+            }
+        }
+    }
+    if (!BbFileExists(bmp)) bmp[0] = 0;
+    if (bmp[0]) surf = SDL_LoadBMP(bmp);
+
+#if SNESRECOMP_SDL3
+    wins = SDL_GetWindows(&n);
+    if (wins) {
+        for (int i = 0; i < n; i++) {
+            if (surf) SDL_SetWindowIcon(wins[i], surf);
+#ifdef _WIN32
+            {
+                HWND hwnd = (HWND)SDL_GetPointerProperty(
+                    SDL_GetWindowProperties(wins[i]),
+                    SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+                if (hwnd) {
+                    HICON icon = LoadIconW(GetModuleHandleW(NULL),
+                                           MAKEINTRESOURCEW(1));
+                    if (icon) {
+                        SendMessageW(hwnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
+                        SendMessageW(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icon);
+                    }
+                }
+            }
+#endif
+        }
+        SDL_free(wins);
+    }
+#else
+    (void)surf;
+#endif
+    if (surf) {
+#if SNESRECOMP_SDL3
+        SDL_DestroySurface(surf);
+#else
+        SDL_FreeSurface(surf);
+#endif
+    }
+}
+
 static void DcPrepareFrame(int drawable_w, int drawable_h, int *w, int *h) {
+    BbApplySdlWindowIcon();
     SnesDisplayAspect aspect = SnesDisplayAspect_Clamp(g_config.display_aspect);
     *w = DcDisplay_IsWidescreenEnabled()
              ? DcDisplay_ComputeFrameWidth(g_dc_aspect, drawable_w,
@@ -143,6 +286,9 @@ static const SnesDesktopHostGame kGameHost = {
         "side art. Capped at 1080p and 60 fps.",
     .aspect_get           = DcLauncherWidescreenGet,
     .aspect_set           = DcLauncherWidescreenSet,
+#ifdef RECOMP_LAUNCHER
+    .configure_launcher   = BbConfigureLauncher,
+#endif
 };
 
 #ifndef __ANDROID__

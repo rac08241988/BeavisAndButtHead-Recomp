@@ -87,6 +87,27 @@ if(WIN32 AND NOT SNESRECOMP_SETUP_HOST)
     set_target_properties(BeavisAndButtHeadSNESRecomp PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
 
+# Windows app icon (original SNES front box art, letterboxed). The .rc is
+# part of this target so both the shipped setup-host exe and the player's
+# first-run Generate & rebuild embed it. icon.png / icon.bmp are staged
+# beside the exe for the SDL window icon at runtime.
+if(WIN32)
+    enable_language(RC)
+    target_sources(BeavisAndButtHeadSNESRecomp PRIVATE src/win32/app.rc)
+endif()
+add_custom_command(TARGET BeavisAndButtHeadSNESRecomp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/assets/icon/icon.png"
+        "$<TARGET_FILE_DIR:BeavisAndButtHeadSNESRecomp>/icon.png"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/assets/icon/icon.bmp"
+        "$<TARGET_FILE_DIR:BeavisAndButtHeadSNESRecomp>/icon.bmp"
+    COMMENT "BeavisAndButtHeadSNESRecomp: staging window icon beside the executable"
+    VERBATIM)
+# Folder form so scripts/package_release.sh can --runtime-dir icon into the zip.
+snesrecomp_target_stage_dir(BeavisAndButtHeadSNESRecomp
+    ${CMAKE_SOURCE_DIR}/assets/icon icon)
+
 
 # The mod catalog. This names WHERE the packages are; the framework owns the
 # layout they are staged into beside the executable, and stages them on every

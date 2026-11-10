@@ -1,0 +1,14 @@
+App icon is the official SNES front box art for Beavis and Butt-Head (USA),
+sourced from libretro-thumbnails Named_Boxarts and letterboxed into a square
+(no stretching). Do not substitute the title screen, a snap, or the Genesis
+cover (Viacon / Sega box).
+
+Source PNG: Beavis and Butt-Head (USA).png
+URL: https://thumbnails.libretro.com/Nintendo%20-%20Super%20Nintendo%20Entertainment%20System/Named_Boxarts/Beavis%20and%20Butt-Head%20(USA).png
+https://github.com/libretro-thumbnails/libretro-thumbnails
+
+Files:
+  icon.png / icon_512.png  — 512x512 letterboxed PNG (window / staging)
+  icon.bmp                 — 256x256 letterboxed BMP (SDL_LoadBMP)
+  app.ico                  — 16, 32, 48, 64, 128 (DIB) and 256 (PNG) ICO
+  src/win32/app.ico        — same ICO, next to the Windows .rc
