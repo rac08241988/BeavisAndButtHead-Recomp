@@ -13,7 +13,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 BUILD_DIR="${1:?setup-host build dir}"
-VERSION="${2:-1.0.0}"
+VERSION="${2:-$(tr -d '[:space:]' < "$ROOT/VERSION")}"
 
 bash scripts/package_release.sh "$BUILD_DIR" windows-x64
 PACK="$(ls -t dist/beavisbutthead-*-windows-x64.zip | head -1)"

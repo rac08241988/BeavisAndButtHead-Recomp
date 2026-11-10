@@ -1,5 +1,5 @@
 diff --git a/host/snesrecomp_codegen_host.c b/host/snesrecomp_codegen_host.c
-index 13040e4..1fdd82d 100644
+index 13040e4..cdfac32 100644
 --- a/host/snesrecomp_codegen_host.c
 +++ b/host/snesrecomp_codegen_host.c
 @@ -15,6 +15,7 @@
@@ -25,7 +25,71 @@ index 13040e4..1fdd82d 100644
      const char* data = getenv("RETCOMM_DATA_HOME");
      if (data && data[0] && n < max_n &&
          join_path(bases[n], 1400, data, "toolchains/" SNESRECOMP_TC_PACK))
-@@ -972,19 +981,59 @@ static void handle_progress_line(const char* line,
+@@ -581,10 +590,63 @@ static void env_set(const char* name, const char* value) {
+  * pack's own env script exports for CMake. On POSIX the heavy lifting is left
+  * to sourcing <pack>/env.sh in the spawned shell (see shell_wrap_argv), which
+  * keeps this host correct when the pack's contract changes. */
++
++/* The pack's env.bat used `find /I` to test PATH membership. Windows
++ * find.exe understands /I, but Git for Windows, MSYS, Cygwin, and Wine
++ * often put a Unix find first on PATH. That probe then fails (or, under
++ * Wine's cmd, aborts the script) so cmake never sees clang/ninja.
++ * findstr is a Windows-only name, so it does not collide. */
++static void harden_pack_env_bat(const char* pack_root) {
++    char path[1400];
++    if (!pack_root || !pack_root[0]) return;
++    if (!join_path(path, sizeof(path), pack_root, "env.bat")) return;
++    FILE* f = fopen(path, "rb");
++    if (!f) return;
++    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return; }
++    long sz = ftell(f);
++    if (sz <= 0 || sz > 1024 * 1024) { fclose(f); return; }
++    if (fseek(f, 0, SEEK_SET) != 0) { fclose(f); return; }
++    char* buf = (char*)malloc((size_t)sz + 1);
++    if (!buf) { fclose(f); return; }
++    size_t n = fread(buf, 1, (size_t)sz, f);
++    fclose(f);
++    buf[n] = '\0';
++    if (!strstr(buf, "find /I")) { free(buf); return; }
++    size_t cap = n + 128;
++    char* out = (char*)malloc(cap);
++    if (!out) { free(buf); return; }
++    const char* src = buf;
++    char* dst = out;
++    const char* needle = "find /I ";
++    const char* repl = "findstr /I /C:";
++    size_t nlen = 8;
++    size_t rlen = 15;
++    while (*src) {
++        if (strncmp(src, needle, nlen) == 0) {
++            memcpy(dst, repl, rlen);
++            dst += rlen;
++            src += nlen;
++        } else {
++            *dst++ = *src++;
++        }
++    }
++    *dst = '\0';
++    FILE* w = fopen(path, "wb");
++    if (w) {
++        fwrite(out, 1, (size_t)(dst - out), w);
++        fclose(w);
++    }
++    free(buf);
++    free(out);
++}
++
+ static void activate_toolchain(void) {
+     g_toolchain_root[0] = '\0';
+     if (!resolve_toolchain_root(g_toolchain_root, sizeof(g_toolchain_root)))
+         return;
++#if defined(_WIN32)
++    harden_pack_env_bat(g_toolchain_root);
++#endif
+     char dir[1400];
+     if (join_path(dir, sizeof(dir), g_toolchain_root, "bin"))
+         env_prepend_path(dir);
+@@ -972,19 +1034,59 @@ static void handle_progress_line(const char* line,
      }
  }
  
@@ -87,7 +151,7 @@ index 13040e4..1fdd82d 100644
  
      if (g_has_funcs_h) {
          snprintf(cmdline, sizeof(cmdline),
-@@ -1022,7 +1071,7 @@ static int run_generate_win(const char* rom,
+@@ -1022,7 +1124,7 @@ static int run_generate_win(const char* rom,
      si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
      si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
  
@@ -96,7 +160,7 @@ index 13040e4..1fdd82d 100644
      snprintf(mutable_cmd, sizeof(mutable_cmd), "%s", cmdline);
      if (!CreateProcessA(NULL, mutable_cmd, NULL, NULL, TRUE, 0, NULL,
                          g_project_root, &si, &pi)) {
-@@ -1112,6 +1161,11 @@ static int run_generate_posix(const char* rom,
+@@ -1112,6 +1214,11 @@ static int run_generate_posix(const char* rom,
          argv[argc++] = "--expected-sha256";
          argv[argc++] = (char*)g_cfg->expected_sha256;
      }
@@ -108,7 +172,7 @@ index 13040e4..1fdd82d 100644
      argv[argc++] = "--json-progress";
      argv[argc] = NULL;
  
-@@ -1165,6 +1219,233 @@ static int run_generate_posix(const char* rom,
+@@ -1165,6 +1272,233 @@ static int run_generate_posix(const char* rom,
  }
  #endif
  
@@ -342,7 +406,7 @@ index 13040e4..1fdd82d 100644
  static int host_prepare_generate(const char* source_path, char* out_path,
                                   size_t out_cap, char* err_msg, size_t err_cap,
                                   RecompLauncherCPrepareProgressFn on_progress,
-@@ -1184,6 +1465,7 @@ static int host_prepare_generate(const char* source_path, char* out_path,
+@@ -1184,6 +1518,7 @@ static int host_prepare_generate(const char* source_path, char* out_path,
              return 0;
          }
      }
@@ -350,7 +414,7 @@ index 13040e4..1fdd82d 100644
      step_log_open("snesrecomp generate");
      if (on_progress)
          on_progress(progress_ctx, 0.02f, "Starting snesrecomp generate…");
-@@ -1198,6 +1480,26 @@ static int host_prepare_generate(const char* source_path, char* out_path,
+@@ -1198,6 +1533,26 @@ static int host_prepare_generate(const char* source_path, char* out_path,
          return 0;
  #endif
  
@@ -377,7 +441,55 @@ index 13040e4..1fdd82d 100644
      snprintf(out_path, out_cap, "%s", source_path);
      if (on_progress)
          on_progress(progress_ctx, 1.0f, "Generate complete");
-@@ -1272,13 +1574,16 @@ static int write_windows_deferred_rebuild_helper(char* err_msg, size_t err_cap)
+@@ -1234,6 +1589,17 @@ static int write_windows_deferred_rebuild_helper(char* err_msg, size_t err_cap)
+     fprintf(f, "setlocal EnableExtensions\r\n");
+     fprintf(f, "title %s - rebuilding\r\n", g_display);
+     bat_write_set(f, "PARENT_PID", pid_buf);
++    {
++        char image[260] = "BeavisAndButtHeadSNESRecomp.exe";
++        char module[260];
++        if (GetModuleFileNameA(NULL, module, sizeof(module))) {
++            const char* slash = strrchr(module, '\\');
++            const char* slash2 = strrchr(module, '/');
++            if (slash2 && (!slash || slash2 > slash)) slash = slash2;
++            snprintf(image, sizeof(image), "%s", slash ? slash + 1 : module);
++        }
++        bat_write_set(f, "PARENT_IMAGE", image);
++    }
+     bat_write_set(f, "CMAKE", g_cmake);
+     bat_write_set(f, "BUILD_DIR", g_build_dir);
+     bat_write_set(f, "EXE", g_exe_path);
+@@ -1244,14 +1610,25 @@ static int write_windows_deferred_rebuild_helper(char* err_msg, size_t err_cap)
+     fprintf(f,
+             "echo Waiting for %%DISPLAY%% to exit...\r\n"
+             ":waitloop\r\n"
+-            "tasklist /FI \"PID eq %%PARENT_PID%%\" 2>NUL | "
+-            "findstr /I \"%%PARENT_PID%%\" >NUL\r\n"
++            /* Also match IMAGENAME: Wine keeps start.exe as PID 32, so a
++             * PID-only probe never finishes after the launcher exits. */
++            "tasklist /FI \"PID eq %%PARENT_PID%%\" "
++            "/FI \"IMAGENAME eq %%PARENT_IMAGE%%\" 2>NUL | "
++            "findstr /I /C:\"%%PARENT_IMAGE%%\" >NUL\r\n"
+             "if not errorlevel 1 (\r\n"
+             "  ping -n 2 127.0.0.1 >NUL\r\n"
+             "  goto waitloop\r\n"
+             ")\r\n"
+-            /* The pack's env.bat is its own statement of how to use it
+-             * (PATH, CC/CXX, SDL3_DIR); calling it beats a second copy. */
++            /* Prepend pack tools without `find`. env.bat's PATH probe used
++             * `find /I`, which Git/MSYS/Wine Unix find can shadow or abort.
++             * Calling env.bat afterwards still picks up SDL3_DIR/ZLIB_ROOT. */
++            "set \"PATH=%%PACK%%\\bin;%%PACK%%\\python;%%PATH%%\"\r\n"
++            "if exist \"%%PACK%%\\bin\\clang.exe\" set \"CC=%%PACK%%\\bin\\clang.exe\"\r\n"
++            "if exist \"%%PACK%%\\bin\\clang++.exe\" set \"CXX=%%PACK%%\\bin\\clang++.exe\"\r\n"
++            "if exist \"%%PACK%%\\bin\\llvm-ar.exe\" set \"AR=%%PACK%%\\bin\\llvm-ar.exe\"\r\n"
++            "if exist \"%%PACK%%\\bin\\llvm-ranlib.exe\" set \"RANLIB=%%PACK%%\\bin\\llvm-ranlib.exe\"\r\n"
++            "if exist \"%%PACK%%\\python\\python.exe\" set \"RETCOMM_PYTHON=%%PACK%%\\python\\python.exe\"\r\n"
++            "set \"RETCOMM_TOOLCHAIN_DIR=%%PACK%%\"\r\n"
+             "if exist \"%%PACK%%\\env.bat\" call \"%%PACK%%\\env.bat\"\r\n"
+             "cd /d \"%%ROOT%%\"\r\n"
+             /* A setup zip ships no build tree: configure on first rebuild. */
+@@ -1272,13 +1649,16 @@ static int write_windows_deferred_rebuild_helper(char* err_msg, size_t err_cap)
              "  )\r\n"
              ")\r\n"
              "echo Building...\r\n"
@@ -399,7 +511,7 @@ index 13040e4..1fdd82d 100644
              "  echo.\r\n"
              "  echo Build failed. Fix the errors above, then rebuild manually.\r\n"
              "  pause\r\n"
-@@ -1449,6 +1754,7 @@ static int host_rebuild_game(const char* rom_path, char* out_exe_path,
+@@ -1449,6 +1829,7 @@ static int host_rebuild_game(const char* rom_path, char* out_exe_path,
          snprintf(err_msg, err_cap, "Project tree is not available.");
          return 0;
      }
@@ -407,7 +519,7 @@ index 13040e4..1fdd82d 100644
      /* The wizard's toolchain page normally ran first; this is the fallback
       * for a skipped page or a cache pruned since -- fetch rather than fail. */
      char why[256];
-@@ -1802,7 +2108,7 @@ void snesrecomp_codegen_host_apply(RecompLauncherCGameInfo* gi,
+@@ -1802,7 +2183,7 @@ void snesrecomp_codegen_host_apply(RecompLauncherCGameInfo* gi,
  
      gi->prepare_with_progress = host_prepare_generate;
      gi->prepare_use_selected_rom = 1;
