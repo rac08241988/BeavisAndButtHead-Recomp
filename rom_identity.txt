@@ -1,0 +1,14 @@
+# ROM identity for Beavis and Butt-Head (USA) — the single source of truth.
+# Read by the build (snesrecomp_rom_identity.h), tools/regen.sh and packaging.
+# Digests are of the bare image (copier header stripped).
+
+display_name    = Beavis and Butt-Head
+rom_file        = Beavis and Butt-Head (USA).sfc
+expected_crc32  = 15cf4bd5
+expected_md5    = 4f5421f540a109ea5d818c0af87f2ea8
+expected_sha1   = 00f649f44816ff432ee2b29d7290f2e9544857b5
+expected_sha256 = 15d4fc90cb202a9391718cd40b9f0384165aef03018ed932540e8f7c18b397dd
+rom_size        = 1572864
+mapping         = lorom
+region          = USA
+game_id         = beavisandbutthead-usa

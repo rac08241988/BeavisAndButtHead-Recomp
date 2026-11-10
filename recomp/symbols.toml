@@ -1,0 +1,24 @@
+# Progressive symbol map for Beavis and Butt-Head (USA).
+# Each [[func]] names an address the analyzer should treat as a function.
+# emit = true promotes it to ahead-of-time codegen; false keeps it interpreted.
+
+[[func]]
+name = "I_RESET"
+addr = "8003"
+bank = 0
+emit = false
+note = "Emulation RESET vector ($FFFC)"
+
+[[func]]
+name = "I_NMI"
+addr = "d61e"
+bank = 0
+emit = false
+note = "Native NMI vector ($FFEA)"
+
+[[func]]
+name = "I_IRQ"
+addr = "d65b"
+bank = 0
+emit = false
+note = "Native IRQ vector ($FFEE)"
